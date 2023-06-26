@@ -47,11 +47,36 @@ public class FXMLController {
     
     @FXML
     void doAnalizzaOggetti(ActionEvent event) {
+    	this.model.buildGraph();
 
     }
 
     @FXML
     void doCalcolaComponenteConnessa(ActionEvent event) {
+    	String input=(this.txtObjectId.getText());
+    	Integer inputNum=0;
+    	//controllo che la stringa non sia nulla
+    	if(input=="") {
+    		txtResult.setText("inserire qualcosa");
+    	}
+    	try {
+    		inputNum=Integer.parseInt(input);
+    		
+    	}catch(Exception e ) {
+    		System.out.println("errore non è un intero");
+    	}
+    	if(this.model.isIdInGraph(inputNum)) {
+    		int sizeConnessa=this.model.calcolaConnessa(inputNum);
+    		txtResult.setText("il nodo "+ input+" fa parte di una componente connessa di dimensione "+ sizeConnessa);	
+    	}
+    	else {
+    		txtResult.setText("non esiste il nodo inserito");
+    	}
+    	
+ 
+    	
+    	
+    	
 
     }
 
