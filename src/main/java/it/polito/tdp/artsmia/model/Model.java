@@ -11,6 +11,7 @@ import org.jgrapht.Graphs;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import it.polito.tdp.artsmia.db.ArtsmiaDAO;
@@ -18,81 +19,74 @@ import it.polito.tdp.artsmia.db.ArtsmiaDAO;
 public class Model {
 	
 	private Graph<ArtObject,DefaultWeightedEdge> grafo;
-	private List<ArtObject> allNodes;
 	private ArtsmiaDAO dao;
-	private Map <Integer, ArtObject> idMap; //la idmap si costruisce sui vertici!
-	
+	private Map<Integer, ArtObject> idMap;
+	private List<ArtObject> componenteConnessa;
 	
 	public Model() {
-		this.grafo=new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-		this.allNodes=new ArrayList<>();
 		this.dao=new ArtsmiaDAO();
-		this.idMap=new HashMap<Integer,ArtObject>();
 	}
-	/**
-	 * metodo che riepie il grafo:
-	 * alternativa 1: molto lenta!!!!!
-	 */
-	
-	public void buildGraph() {
-		//carico nodi
-		this.loadNodes();
-		//aggiungo tutti i nodi al grafo
-		Graphs.addAllVertices(this.grafo, this.allNodes);
-		//devo adesso caricare gli archi
-		
-//		for (ArtObject o1: allNodes) {
-//			for (ArtObject o2:allNodes) {
-//				int peso=dao.getWeight(o1.getId(), o2.getId());
-//				Graphs.addEdgeWithVertices(this.grafo, o1,o2,peso);
-//			}
-//		}
-//		
-		
-		List<edgeModel> allEdges=this.dao.getAllWeights(idMap);
-		for (edgeModel e:allEdges) {
-			Graphs.addEdgeWithVertices(this.grafo, e.getSource(), e.getTarget(),e.getPeso());
+	public void creaGrafo() {
+		this.idMap=new HashMap<Integer, ArtObject>();
+		this.grafo=new SimpleWeightedGraph<ArtObject,DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		List<ArtObject> vertici=dao.listObjects();
+		Graphs.addAllVertices(this.grafo, vertici);
+		for(ArtObject a: vertici) {
+			this.idMap.put(a.getId(),a);
 		}
-		
-		System.out.println("This graph contains " + this.grafo.vertexSet().size()+" vertci e "+this.grafo.edgeSet().size());
-	}
-	
-	
-	private void loadNodes(){
-		if(this.allNodes.isEmpty()) {
-			this.allNodes=dao.listObjects();
-			for (ArtObject o: this.allNodes) {
-				this.idMap.put(o.getId(), o);
-			}
+		List<edgeModel> archi=this.dao.getAllWeights(idMap);
+		for(edgeModel e: archi) {
+			DefaultWeightedEdge edge=this.grafo.addEdge(e.getSource(), e.getTarget());
+			this.grafo.setEdgeWeight(edge,e.getPeso());
 		}
 	}
 	
 	
-	
-	public boolean isIdInGraph(int objectId) {
-		if (this.idMap.get(objectId)!=null) 
-			return true;
-		else
-			return false;	
+	public int getVertex() {
+		return this.grafo.vertexSet().size();
+		
 	}
 	
-	public Integer calcolaConnessa(int objectId) {
-		//con un iteratore esploro il grafo                                                             //nodo sorgente
-		DepthFirstIterator<ArtObject,DefaultWeightedEdge> iterator=new DepthFirstIterator<>(this.grafo, this.idMap.get(objectId));
-		List<ArtObject> compConnessa=new ArrayList<>();
-		while(iterator.hasNext()) {
-			compConnessa.add(iterator.next());	
+	public int getEdges() {
+		return this.grafo.edgeSet().size();
+		
+	}
+	public Set<ArtObject> componenteConnessa(int input) {
+		if(this.idMap.get(input)==null) {
+			return null;
 		}
-		//alternativa:
+		//metodo 1
+		System.out.println("provo metodo 1");
+		BreadthFirstIterator<ArtObject,DefaultWeightedEdge> iteratore=new BreadthFirstIterator<>(this.grafo,this.idMap.get(input));
+		List componenteConnessa=new ArrayList<>();
+		while (iteratore.hasNext()) {
+			componenteConnessa.add(iteratore.next());
+		}
+		
+		//metodo 1b
+		System.out.println("provo metodo 1b");
+		DepthFirstIterator<ArtObject,DefaultWeightedEdge> iterator=new DepthFirstIterator<>(this.grafo,this.idMap.get(input));
+		componenteConnessa=new ArrayList<>();
+		while (iterator.hasNext()) {
+			componenteConnessa.add(iterator.next());
+		}
+		
+		
+		//metodo 2
+		System.out.println("provo metodo 2");
+		componenteConnessa=new ArrayList<>();
 		ConnectivityInspector<ArtObject,DefaultWeightedEdge> inspector=new ConnectivityInspector<>(this.grafo);
-		Set <ArtObject>setConnesso=inspector.connectedSetOf(this.idMap.get(objectId));
+		Set<ArtObject> a=inspector.connectedSetOf(this.idMap.get(input));
 		
-		return compConnessa.size();
-		//return setConnesso.size();
-		// la dimensione della componente connessa è la quanttà di tutti i nodi connessi
+		System.out.println("trovato");
+		return a;
 		
 	}
+	
 	
 }
+	
+	
+	
 	
 

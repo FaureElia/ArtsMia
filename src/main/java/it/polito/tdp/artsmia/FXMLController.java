@@ -5,8 +5,11 @@
 package it.polito.tdp.artsmia;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
+import it.polito.tdp.artsmia.model.ArtObject;
 import it.polito.tdp.artsmia.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -47,7 +50,11 @@ public class FXMLController {
     
     @FXML
     void doAnalizzaOggetti(ActionEvent event) {
-    	this.model.buildGraph();
+    	this.model.creaGrafo();
+    	this.txtResult.setText("grafo trovato\n");
+    	this.txtResult.appendText("vertici: "+this.model.getVertex()+"\n");
+    	this.txtResult.appendText("archi: "+this.model.getEdges()+"\n");
+    	
 
     }
 
@@ -58,20 +65,27 @@ public class FXMLController {
     	//controllo che la stringa non sia nulla
     	if(input=="") {
     		txtResult.setText("inserire qualcosa");
+    		return;
     	}
     	try {
     		inputNum=Integer.parseInt(input);
+    		Set<ArtObject> lista=this.model.componenteConnessa(inputNum);
+    		System.out.println("controller");
+    		if(lista==null) {
+    			this.txtResult.setText("elemento non esistente");
+    			return;
+    		}
+    		else{
+    			System.out.println("stampo");
+    			this.txtResult.setText("trovata componente connessa: \n");	
+    				this.txtResult.appendText(lista.size()+"");
+    			
+    		}
     		
-    	}catch(Exception e ) {
+    	}catch(NumberFormatException e ) {
     		System.out.println("errore non è un intero");
     	}
-    	if(this.model.isIdInGraph(inputNum)) {
-    		int sizeConnessa=this.model.calcolaConnessa(inputNum);
-    		txtResult.setText("il nodo "+ input+" fa parte di una componente connessa di dimensione "+ sizeConnessa);	
-    	}
-    	else {
-    		txtResult.setText("non esiste il nodo inserito");
-    	}
+    	
     	
  
     	
